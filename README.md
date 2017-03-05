@@ -18,14 +18,15 @@ Clone or download this repository.
 Fork this repository and send a pull request.  Feel free to help with issues on the issue tracker or to-do's in the individual files.
  Orignal contributions are also welcome.  My intent is to make this repo useful for the P21 community at large
 
-    * Comment any code you submit
-    * Make sure it is easy for someone to adapt to their deployment
-    * Please submit well-formed readable code
+* Comment any code you submit
+* Make sure it is easy for someone to adapt to their deployment
+* Please submit well-formed readable code
 
 ##Thanks/Credits
 * Michael Dean: great developer for P21 who posted some of the DB restore code [http://www.ydbconsultant.com]
 * David Klee: super genius on stack performance, gave me some of the SQL performance stuff [http://www.heraflux.com/]
 * Epicor: [http://www.epicor.com/default.aspx]
+* Others: Credit is given to others in individual files as appropriate.
 
 ##License
 This repository is subject to the MIT License.  See license.md in this repository for details.  For more information on
