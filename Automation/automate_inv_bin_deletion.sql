@@ -1,3 +1,13 @@
+/**
+ * The p21 stored procedure for inv bin deletion cleans up
+ * inv bin records with 0 quantity linked.  From the P21
+ * desktop, you can do this on a more granular basis.
+ *
+ * This script will loop through all active locations with lot/bin
+ * integration enabled and execute the p21 stored proc for each location
+ *
+ */
+
 DECLARE @location INT
 DECLARE @company VARCHAR(20)
 DECLARE @msg VARCHAR(255)
@@ -17,7 +27,7 @@ FETCH NEXT FROM locCursor INTO @location, @company
 WHILE @@FETCH_STATUS = 0
 BEGIN
 
-	EXEC [dbo].[p21_inv_bin_deletion]
+	EXEC dbo.p21_inv_bin_deletion
 		@as_CompanyID	= @company
 		,@ai_LocationID = @location
 		,@as_BeginItemID =''
