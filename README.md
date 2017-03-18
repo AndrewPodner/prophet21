@@ -7,7 +7,7 @@
 * Queries that drive reporting
 * XSD files and datastream modifications
 
-##Installation
+## Installation
 Clone or download this repository.
 
 ## Documentation
