@@ -20,3 +20,5 @@ FROM
 			c.company_id = i.company_id
 			AND c.customer_id = i.entity_link_id_dec
 			AND 1203 = i.entity_type_cd
+ORDER BY
+  c.customer_name
