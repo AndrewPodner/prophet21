@@ -5,7 +5,7 @@ SELECT
 INTO #temp_quotes
 FROM 
 	dbo.oe_hdr h WITH (NOLOCK)
-		INNER JOIN dbo.quote_hdr qh on h.oe_hdr_uid = qh.oe_hdr_uid 
+		INNER JOIN dbo.quote_hdr qh WITH (NOLOCK) on h.oe_hdr_uid = qh.oe_hdr_uid 
 WHERE
     (h.cancel_flag = 'N' or h.cancel_flag is null)
 	and h.completed = 'N'
@@ -20,7 +20,7 @@ UPDATE h SET
 	,date_last_modified = GETDATE()
 	,last_maintained_by = 'admin'
 FROM 
-	oe_hdr h WITH (NOLOCK)
+	oe_hdr h
 		INNER JOIN #temp_quotes q on h.oe_hdr_uid = q.oe_hdr_uid
 
 
@@ -31,7 +31,7 @@ UPDATE l SET
 	,date_last_modified = GETDATE()
 	,last_maintained_by = 'admin'
 
-FROM dbo.oe_line l WITH (NOLOCK)
+FROM dbo.oe_line l
 	INNER JOIN #temp_quotes q on l.oe_hdr_uid = q.oe_hdr_uid 
 
 
@@ -43,7 +43,7 @@ UPDATE qh SET
 	,qh.last_maintained_by = 'admin'
 
 FROM
-	dbo.quote_hdr qh WITH (NOLOCK)
+	dbo.quote_hdr qh 
 		INNER JOIN #temp_quotes t on qh.quote_hdr_uid = t.quote_hdr_uid
 
 
@@ -54,8 +54,8 @@ UPDATE ql SET
 	,ql.last_maintained_by = 'admin'	
 
 FROM
-	dbo.quote_line ql WITH (NOLOCK)
-		INNER JOIN dbo.oe_line ol WITH (NOLOCK) on ql.oe_line_uid = ol.oe_line_uid
+	dbo.quote_line ql 
+		INNER JOIN dbo.oe_line ol on ql.oe_line_uid = ol.oe_line_uid
 		INNER JOIN #temp_quotes q on ol.oe_hdr_uid = q.oe_hdr_uid
 
 	
