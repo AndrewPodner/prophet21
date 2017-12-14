@@ -63,3 +63,8 @@ UPDATE [P21Play].dbo.alert_implementation SET
 	row_status_flag = 705;
 
 EXEC [P21Play].dbo.p21_add_job_category;
+
+--Fix Orphaned Users
+USE P21Play
+GO
+EXEC sp_change_users_login 'Auto_Fix', '<user_name>'  --add a line for each user you want to fix
