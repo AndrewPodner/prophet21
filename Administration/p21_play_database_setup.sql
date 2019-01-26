@@ -9,6 +9,7 @@ DECLARE @backupFile VARCHAR(80) = 'S:\YourBackupFileNameHere.bak'
 DECLARE @playRulesLocation VARCHAR(80) = 'C:\Program Files (x86)\Activant\DynaChangeRulesPlay'
 DECLARE @playCrystalPath VARCHAR(80) = 'C:\Reports_P21Play'
 DECLARE @liveCrystalPath VARCHAR(80) = 'C:\P21_Reports'
+DECLARE @playScriptPath VARCHAR(80) = 'C:\P21Forms_P21Play'
 
 --Assumes that you have an existing Play database, comment this out
 --if you don't.  
@@ -57,6 +58,19 @@ UPDATE [P21Play].dbo.label_definition_x_loc SET
 --Change Crystal External Reports
 UPDATE [P21Play].dbo.[crystal_external_report] SET 
 	report_path = @playCrystalPath;
+
+-- Update System script path
+-- Avoids unintended document "merging" in production-generated forms
+UPDATE [P21Play].dbo.system_setting 
+SET [value] = @playScriptPath
+WHERE [name] = 'script_path';
+
+-- Update User script paths (if set) to a subfolder of the system script path, i.e.:
+--    C:\P21Forms_P21Play\John.Public
+-- Avoids unintended document "merging" in production-generated forms
+UPDATE [P21Play].dbo.users
+SET script_path = @playScriptPath + '\' + [P21Play].dbo.users.id
+WHERE DATALENGTH( [P21Play].dbo.users.script_path ) > 0
 
 --Shut off all alerts & Rebuild Alert system
 UPDATE [P21Play].dbo.alert_implementation SET 
