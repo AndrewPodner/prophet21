@@ -78,6 +78,19 @@ UPDATE [P21Play].dbo.alert_implementation SET
 
 EXEC [P21Play].dbo.p21_add_job_category;
 
+-- Update credentials and URLs for Express ("Element", "Vantiv", "Worldpay", ...whatever's next)
+-- credit card processors; avoids having credit card transactions done in the play database from
+-- hitting the production merchant account.
+UPDATE creditcard_processor 
+SET processor_name = '1000551'
+	, processor_number = 'CC500CB79CFFD2F82E107F1F6135DE4EF9A8C7BD2229B1034AEE4085A530C89066AC8901'
+	, merchant_id = '3928907'
+	, web_server_url = REPLACE( web_server_url, 'https://transaction', 'https://certtransaction' )
+	, transaction_url = REPLACE( web_server_url, 'https://transaction', 'https://certtransaction' )
+	, reporting_url = REPLACE( web_server_url, 'https://reporting', 'https://certreporting' )
+	, services_url = REPLACE( web_server_url, 'https://services', 'https://certservices' )
+WHERE creditcard_processor.epayment_integration_type_cd = 2808
+	
 --Fix Orphaned Users
 USE P21Play
 GO
