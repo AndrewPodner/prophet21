@@ -30,38 +30,6 @@ ALTER DATABASE [P21Play] SET TRUSTWORTHY ON;
 --Positively set the owner of the DB, modify as you see fit
 ALTER AUTHORIZATION ON DATABASE::P21Play TO sa;
 
--- Set all configuration options needed for P21
--- -- Allow for advanced options to be configured
-EXEC sp_configure 'show advanced options', 1;
-GO
-RECONFIGURE;
-GO
--- -- Enable SQL Server Agent extended stored procedures.
-EXEC sp_configure 'Agent XPs', 1;
-GO
-RECONFIGURE
-GO
--- -- Enable OLE Automation procedures.
-EXEC sp_configure 'Ole Automation Procedures', 1;
-GO
-RECONFIGURE;
-GO
--- -- Enable the command shell extended stored procedure.
-EXEC sp_configure 'xp_cmdshell', 1;
-GO
-RECONFIGURE;
-GO
--- -- Enable CLR integration.
-EXEC sp_configure 'clr enabled' , '1';
-GO
-RECONFIGURE;
-GO
--- -- Enable Database Mail extended stored procedures.
-EXEC sp_configure 'Database Mail XPs', 1;
-GO
-RECONFIGURE
-GO
-
 -- Append Company names with P21Play
 UPDATE [P21Play].dbo.company SET 
 	company_name = LEFT(company_name, 20) + ' (P21Play)';
