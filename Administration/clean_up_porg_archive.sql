@@ -1,12 +1,8 @@
 /*
 Atlas Precision Consulting LLC - 1/23/2024
 By: Andrew Podner
-Script to clean up the PORG data that is archived in P21
-This script deletes any data older than a specified number of months.
-
-This is useful when your supporting tables for PORG Data are getting
-so full that it begins to have a performance effect on the tables
-and also on the speed at which PORG is generating items in the P21user interface.
+Script to clean up the open quotes and set them to complete
+This script completes any quote older than a specified date.
 
 This script and any associated comments are a good faith attempt to
 assist the consumer with their environment.  No warranty is expressed
@@ -15,14 +11,110 @@ or implied.   Consumer uses this script at his/her own risk.
 !!!! Test all code in a Play / Pre-Production Environment before running
 against the live database!!!!!
 
-
 This script may take a long time to run if there is a large build up of data.
 It should only be run in an overnight process or a maintenance window.
 */
 
---set this to the number of months of PORG data you
---wish to retain
-declare @monthsToRetain int = 3
+declare @startDate date = '2020-01-01' --edit this date to change the scope (YYYY-MM-DD)
+declare @modifiedByUser varchar(40) = 'admin'
+declare @updateData char(1) = 'N'  --valid values are Y and N
+declare @keepUnexpiredQuotes char(1) = 'Y' --valid values are Y and N, determines if unexpired quotes will be completed or not.
+
+
+
+--DO NOT EDIT BELOW THIS LINE--
+IF OBJECT_ID('tempdb..#temp_quotes') IS NOT NULL
+    DROP TABLE #temp_quotes
+
+
+SELECT
+	h.oe_hdr_uid
+	,qh.quote_hdr_uid
+	,h.order_no
+	,h.customer_id
+	,h.ship2_name
+	,qh.expiration_date
+	,qh.date_created
+INTO #temp_quotes
+FROM 
+	dbo.oe_hdr h WITH (NOLOCK)
+		INNER JOIN dbo.quote_hdr qh WITH (NOLOCK) on h.oe_hdr_uid = qh.oe_hdr_uid 
+WHERE
+    (h.cancel_flag = 'N' or h.cancel_flag is null)
+	and h.completed = 'N'
+	and h.projected_order = 'Y'
+	and h.date_created < @startDate
+
+
+
+--handler for keeping unexpired quotes, and treating null expire date as not expired
+if (@keepUnexpiredQuotes = 'Y')
+begin 
+	update #temp_quotes set expiration_date = '2049-12-31' where expiration_date is null;
+	delete from #temp_quotes where expiration_date > GETDATE()
+end
+
+
+--handler for null or blank update user
+if (isnull(@modifiedByUser,'') = '')
+begin
+	set @modifiedByUser = 'admin'
+end
+
+
+--handler to determine if we are running in preview mode or actually
+--doing the update.
+if (@updateData = 'Y')
+begin
+
+	/*** ORDER HEADER ***/
+	UPDATE h SET 
+		completed = 'Y'
+		,date_last_modified = GETDATE()
+		,last_maintained_by = @modifiedByUser
+	FROM 
+		oe_hdr h
+			INNER JOIN #temp_quotes q on h.oe_hdr_uid = q.oe_hdr_uid
+
+
+	/*** ORDER LINE ***/
+	UPDATE l SET 
+		l.complete = 'Y'
+		,date_last_modified = GETDATE()
+		,last_maintained_by = @modifiedByUser
+
+	FROM dbo.oe_line l
+		INNER JOIN #temp_quotes q on l.oe_hdr_uid = q.oe_hdr_uid 
+
+
+
+	/***QUOTE HEADER ***/
+	UPDATE qh SET
+		qh.complete_flag = 'Y'
+		,qh.date_last_modified = GETDATE()
+		,qh.last_maintained_by = @modifiedByUser
+
+	FROM
+		dbo.quote_hdr qh 
+			INNER JOIN #temp_quotes t on qh.quote_hdr_uid = t.quote_hdr_uid
+
+
+	/***QUOTE LINE***/
+	UPDATE ql SET
+		ql.line_complete_flag = 'Y'
+		,ql.date_last_modified = GETDATE()
+		,ql.last_maintained_by = @modifiedByUser	
+
+	FROM
+		dbo.quote_line ql 
+			INNER JOIN dbo.oe_line ol on ql.oe_line_uid = ol.oe_line_uid
+			INNER JOIN #temp_quotes q on ol.oe_hdr_uid = q.oe_hdr_uid
+
+end
+else
+begin
+	select * from #temp_quotes
+end
 
 
 
@@ -30,38 +122,6 @@ declare @monthsToRetain int = 3
 
 
 
----DO NOT MODIFY BELOW THIS POINT---
-
-IF OBJECT_ID('tempdb..#temp_gpor') IS NOT NULL
-    DROP TABLE #temp_gpor
-
-CREATE TABLE #temp_gpor (
-	gpor_uid DECIMAL(19,0)
-)
-
---select all of the PORG run headers and get them into a temp table, then
---use those IDs to delete the child records.
-
-INSERT INTO #temp_gpor (gpor_uid)
-	SELECT gpor_run_hdr_uid FROM dbo.gpor_run_hdr
-		WHERE date_created <= DATEADD(MONTH, -1 * @monthsToRetain, GETDATE())
 
 
-DELETE FROM dbo.gpor_vss WHERE gpor_run_hdr_uid in
-	(SELECT gpor_uid from #temp_gpor)
-
-DELETE FROM dbo.gpor_run WHERE  gpor_run_hdr_uid in
-	(SELECT gpor_uid from #temp_gpor)
-
-DELETE FROM dbo.gpor_run_drp_forecasts WHERE gpor_run_hdr_uid in
-	(SELECT gpor_uid from #temp_gpor)
-
-DELETE FROM dbo.gpor_run_hdr WHERE gpor_run_hdr_uid in
-	(SELECT gpor_uid from #temp_gpor)
-
-DELETE FROM dbo.gpor_dynamic_look_ahead WHERE gpor_run_hdr_uid in
-	(SELECT gpor_uid from #temp_gpor)
-
-DROP TABLE #temp_gpor
-
---END SCRIPT--
+DROP TABLE #temp_quotes
